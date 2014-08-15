@@ -52,15 +52,15 @@ typedef struct json_builder_value
 
 const size_t json_builder_extra = sizeof(json_builder_value) - sizeof(json_value);
 
-/* These flags are set up from the opts before parsing to make the parse-time
- * conditions simpler.
+/* These flags are set up from the opts before serializing to make the
+ * serializer conditions simpler.
  */
 const int f_spaces_around_brackets = (1 << 0);
 const int f_spaces_after_commas    = (1 << 1);
 const int f_spaces_after_colons    = (1 << 2);
 const int f_tabs                   = (1 << 3);
 
-int get_parsetime_flags (json_serialize_opts opts)
+int get_serialize_flags (json_serialize_opts opts)
 {
    int flags = 0;
 
@@ -347,7 +347,7 @@ size_t json_measure_ex (json_value * value, json_serialize_opts opts)
    int flags;
    int bracket_size, comma_size, colon_size;
 
-   flags = get_parsetime_flags (opts);
+   flags = get_serialize_flags (opts);
 
    /* to reduce branching
     */
@@ -532,7 +532,7 @@ void json_serialize_ex (json_char * buf, json_value * value, json_serialize_opts
    int i;
    int flags;
 
-   flags = get_parsetime_flags (opts);
+   flags = get_serialize_flags (opts);
 
    indent_char = flags & f_tabs ? '\t' : ' ';
 
