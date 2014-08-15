@@ -34,6 +34,10 @@
 #include <assert.h>
 #include <stdio.h>
 
+#ifdef _MSC_VER
+    #define snprintf _snprintf
+#endif
+
 const static json_serialize_opts default_opts =
 {
    json_serialize_mode_single_line,
