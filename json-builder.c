@@ -309,6 +309,36 @@ json_value * json_null_new ()
    return value;
 }
 
+void json_object_sort (json_value * object, json_value * proto)
+{
+   unsigned int i, out_index = 0;
+
+   assert (object->type == json_object);
+   assert (proto->type == json_object);
+
+   for (i = 0; i < proto->u.object.length; ++ i)
+   {
+      unsigned int j;
+      struct json_object_entry proto_entry = proto->u.object.values [i];
+
+      for (j = 0; j < object->u.object.length; ++ j)
+      {
+         struct json_object_entry entry = object->u.object.values [j];
+
+         if (entry.name_length != proto_entry.name_length)
+            continue;
+
+         if (memcmp (entry.name, proto_entry.name, entry.name_length) != 0)
+            continue;
+
+         object->u.object.values [j] = object->u.object.values [out_index];
+         object->u.object.values [out_index] = entry;
+
+         ++ out_index;
+      }
+   }
+}
+
 static size_t measure_string (unsigned int length,
                               const json_char * str)
 {

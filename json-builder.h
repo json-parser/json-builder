@@ -101,6 +101,16 @@ json_value * json_boolean_new (int);
 json_value * json_null_new ();
 
 
+/*** Sorting
+ ***/
+
+/* Sort the entries of an object based on the order in a prototype object.
+ * Helpful when reading JSON and writing it again to preserve user order.
+ */
+void json_object_sort (json_value * object, json_value * proto);
+
+
+
 /*** Serializing
  ***/
 #define json_serialize_mode_multiline     0
