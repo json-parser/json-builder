@@ -93,14 +93,14 @@ int get_serialize_flags (json_serialize_opts opts)
 
 json_value * json_array_new (size_t length)
 {
-    json_value * value = malloc (sizeof (json_builder_value));
+    json_value * value = (json_value *) malloc (sizeof (json_builder_value));
 
     if (!value)
        return NULL;
 
     value->type = json_array;
 
-    if (! (value->u.array.values = malloc (length * sizeof (json_value *))))
+    if (! (value->u.array.values = (json_value **) malloc (length * sizeof (json_value *))))
     {
        free (value);
        return NULL;
@@ -141,7 +141,7 @@ json_value * json_array_push (json_value * array, json_value * value)
 
 json_value * json_object_new (size_t length)
 {
-    json_value * value = malloc (sizeof (json_builder_value));
+    json_value * value = (json_value *) malloc (sizeof (json_builder_value));
 
     if (!value)
        return NULL;
@@ -175,7 +175,7 @@ json_value * json_object_push_length (json_value * object,
 
    assert (value->type == json_object);
 
-   if (! (name_copy = malloc ((name_length + 1) * sizeof (json_char))))
+   if (! (name_copy = (json_char *) malloc ((name_length + 1) * sizeof (json_char))))
       return NULL;
    
    memcpy (name_copy, name, name_length * sizeof (json_char));
@@ -231,7 +231,7 @@ json_value * json_string_new (const json_char * buf)
 json_value * json_string_new_length (unsigned int length, const json_char * buf)
 {
    json_value * value;
-   json_char * copy = malloc ((length + 1) * sizeof (json_char));
+   json_char * copy = (json_char *) malloc ((length + 1) * sizeof (json_char));
 
    if (!copy)
       return NULL;
@@ -250,7 +250,7 @@ json_value * json_string_new_length (unsigned int length, const json_char * buf)
 
 json_value * json_string_new_nocopy (unsigned int length, json_char * buf)
 {
-   json_value * value = malloc (sizeof (json_builder_value));
+   json_value * value = (json_value *) malloc (sizeof (json_builder_value));
    
    if (!value)
       return NULL;
@@ -264,7 +264,7 @@ json_value * json_string_new_nocopy (unsigned int length, json_char * buf)
 
 json_value * json_integer_new (json_int_t integer)
 {
-   json_value * value = malloc (sizeof (json_builder_value));
+   json_value * value = (json_value *) malloc (sizeof (json_builder_value));
    
    if (!value)
       return NULL;
@@ -277,7 +277,7 @@ json_value * json_integer_new (json_int_t integer)
 
 json_value * json_double_new (double dbl)
 {
-   json_value * value = malloc (sizeof (json_builder_value));
+   json_value * value = (json_value *) malloc (sizeof (json_builder_value));
    
    if (!value)
       return NULL;
@@ -290,7 +290,7 @@ json_value * json_double_new (double dbl)
 
 json_value * json_boolean_new (int b)
 {
-   json_value * value = malloc (sizeof (json_builder_value));
+   json_value * value = (json_value *) malloc (sizeof (json_builder_value));
    
    if (!value)
       return NULL;
@@ -303,7 +303,7 @@ json_value * json_boolean_new (int b)
 
 json_value * json_null_new ()
 {
-   json_value * value = malloc (sizeof (json_builder_value));
+   json_value * value = (json_value *) malloc (sizeof (json_builder_value));
    
    if (!value)
       return NULL;
