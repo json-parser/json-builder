@@ -84,6 +84,15 @@ json_value * json_object_push_nocopy (json_value * object,
                                       unsigned int name_length, json_char * name,
                                       json_value *);
 
+/* Merges all entries from objectB into objectA and destroys objectB.
+ */
+json_value * json_object_merge (json_value * objectA, json_value * objectB);
+
+/* Sort the entries of an object based on the order in a prototype object.
+ * Helpful when reading JSON and writing it again to preserve user order.
+ */
+void json_object_sort (json_value * object, json_value * proto);
+
 
 
 /*** Strings
@@ -99,16 +108,6 @@ json_value * json_integer_new (json_int_t);
 json_value * json_double_new (double);
 json_value * json_boolean_new (int);
 json_value * json_null_new ();
-
-
-/*** Sorting
- ***/
-
-/* Sort the entries of an object based on the order in a prototype object.
- * Helpful when reading JSON and writing it again to preserve user order.
- */
-void json_object_sort (json_value * object, json_value * proto);
-
 
 
 /*** Serializing

@@ -346,6 +346,46 @@ void json_object_sort (json_value * object, json_value * proto)
    }
 }
 
+json_value * json_object_merge (json_value * objectA, json_value * objectB)
+{
+   assert (objectA->type == json_object);
+   assert (objectB->type == json_object);
+
+   if (objectB->u.object.length <=
+        ((json_builder_value *) objectA)->additional_length_allocated)
+   {
+      ((json_builder_value *) objectA)->additional_length_allocated
+          -= objectB->u.object.length;
+   }
+   else
+   {
+      json_object_entry * values_new;
+
+      unsigned int alloc =
+          objectA->u.object.length
+              + ((json_builder_value *) objectA)->additional_length_allocated
+              + objectB->u.object.length;
+
+      if (! (values_new = (json_object_entry *)
+            realloc (objectA->u.object.values, sizeof (json_object_entry) * alloc)))
+      {
+          return NULL;
+      }
+
+      objectA->u.object.values = values_new;
+   }
+
+   memcpy (objectA->u.object.values + objectA->u.object.length,
+           objectB->u.object.values,
+           objectB->u.object.length * sizeof (json_object_entry));
+
+   objectA->u.object.length += objectB->u.object.length;
+
+   free (objectB);
+
+   return objectA;
+}
+
 static size_t measure_string (unsigned int length,
                               const json_char * str)
 {
