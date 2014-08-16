@@ -193,6 +193,8 @@ json_value * json_object_push_nocopy (json_value * object,
                                       unsigned int name_length, json_char * name,
                                       json_value * value)
 {
+   json_object_entry * entry;
+
    assert (value->type == json_object);
 
    if (((json_builder_value *) value)->additional_length_allocated > 0)
@@ -211,9 +213,11 @@ json_value * json_object_push_nocopy (json_value * object,
       object->u.object.values = values_new;
    }
 
-   object->u.object.values [object->u.object.length].name_length = name_length;
-   object->u.object.values [object->u.object.length].name = name;
-   object->u.object.values [object->u.object.length].value = value;
+   entry = object->u.object.values + object->u.object.length;
+
+   entry->name_length = name_length;
+   entry->name = name;
+   entry->value = value;
 
    ++ object->u.object.length;
 
@@ -391,6 +395,7 @@ size_t json_measure_ex (json_value * value, json_serialize_opts opts)
    while (value)
    {
       json_int_t integer;
+      json_object_entry * entry;
 
       switch (value->type)
       {
@@ -462,11 +467,12 @@ size_t json_measure_ex (json_value * value, json_serialize_opts opts)
                MEASURE_NEWLINE();
             }
 
-            total += 2 + colon_size;  /* `"": ` */
-            total += measure_string (value->u.object.values [((json_builder_value *) value)->length_iterated].name_length,
-                                     value->u.object.values [((json_builder_value *) value)->length_iterated].name);
+            entry = value->u.object.values + (((json_builder_value *) value)->length_iterated ++);
 
-            value = value->u.object.values [((json_builder_value *) value)->length_iterated ++].value;
+            total += 2 + colon_size;  /* `"": ` */
+            total += measure_string (entry->name_length, entry->name);
+
+            value = entry->value;
             continue;
 
          case json_string:
@@ -559,6 +565,7 @@ void json_serialize (json_char * buf, json_value * value)
 void json_serialize_ex (json_char * buf, json_value * value, json_serialize_opts opts)
 {
    json_int_t integer, orig_integer;
+   json_object_entry * entry;
    json_char * ptr;
    int indent = 0;
    char indent_char;
@@ -652,17 +659,17 @@ void json_serialize_ex (json_char * buf, json_value * value, json_serialize_opts
                PRINT_NEWLINE();
             }
 
+            entry = value->u.object.values + (((json_builder_value *) value)->length_iterated ++);
+
             *buf ++ = '\"';
-            buf += serialize_string (buf,
-                                     value->u.object.values [((json_builder_value *) value)->length_iterated].name_length,
-                                     value->u.object.values [((json_builder_value *) value)->length_iterated].name);
+            buf += serialize_string (buf, entry->name_length, entry->name);
             *buf ++ = '\"';
             *buf ++ = ':';
 
             if (flags & f_spaces_after_colons)
                *buf ++ = ' ';
 
-            value = value->u.object.values [((json_builder_value *) value)->length_iterated ++].value;
+            value = entry->value;
             continue;
 
          case json_string:
