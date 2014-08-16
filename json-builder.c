@@ -121,9 +121,8 @@ json_value * json_array_push (json_value * array, json_value * value)
    }
    else
    {
-      json_value ** values_new = realloc (array->u.array.values,
-                                          sizeof (json_value *)
-                                             * (array->u.array.length + 1));
+      json_value ** values_new = (json_value **) realloc
+            (array->u.array.values, sizeof (json_value *) * (array->u.array.length + 1));
 
       if (!values_new)
          return NULL;
@@ -148,7 +147,7 @@ json_value * json_object_new (size_t length)
 
     value->type = json_object;
 
-    if (! (value->u.object.values = calloc
+    if (! (value->u.object.values = (json_object_entry *) calloc
            (length, sizeof (*value->u.object.values))))
     {
        free (value);
@@ -202,9 +201,9 @@ json_value * json_object_push_nocopy (json_value * object,
    }
    else
    {
-      void * values_new = realloc (object->u.object.values,
-                                   sizeof (*value->u.object.values)
-                                       * (object->u.object.length + 1));
+      json_object_entry * values_new = (json_object_entry *)
+            realloc (object->u.object.values, sizeof (*value->u.object.values)
+                            * (object->u.object.length + 1));
 
       if (!values_new)
          return NULL;
@@ -323,11 +322,11 @@ void json_object_sort (json_value * object, json_value * proto)
    for (i = 0; i < proto->u.object.length; ++ i)
    {
       unsigned int j;
-      struct json_object_entry proto_entry = proto->u.object.values [i];
+      json_object_entry proto_entry = proto->u.object.values [i];
 
       for (j = 0; j < object->u.object.length; ++ j)
       {
-         struct json_object_entry entry = object->u.object.values [j];
+         json_object_entry entry = object->u.object.values [j];
 
          if (entry.name_length != proto_entry.name_length)
             continue;
