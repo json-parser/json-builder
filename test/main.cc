@@ -204,7 +204,7 @@ bool json_equal (json_value * a, json_value * b)
                 if (lhs->u.array.length != rhs->u.array.length)
                     return false;
 
-                for (int i = 0; i < lhs->u.object.length; ++ i)
+                for (int i = 0; i < lhs->u.array.length; ++ i)
                 {
                     stack.push_back (lhs->u.array.values [i]);
                     stack.push_back (rhs->u.array.values [i]);
