@@ -113,7 +113,7 @@ json_value * json_array_new (size_t length)
 
 json_value * json_array_push (json_value * array, json_value * value)
 {
-   assert (value->type == json_array);
+   assert (array->type == json_array);
 
    if (((json_builder_value *) value)->additional_length_allocated > 0)
    {
@@ -172,7 +172,7 @@ json_value * json_object_push_length (json_value * object,
 {
    json_char * name_copy;
 
-   assert (value->type == json_object);
+   assert (object->type == json_object);
 
    if (! (name_copy = (json_char *) malloc ((name_length + 1) * sizeof (json_char))))
       return NULL;
@@ -195,7 +195,7 @@ json_value * json_object_push_nocopy (json_value * object,
 {
    json_object_entry * entry;
 
-   assert (value->type == json_object);
+   assert (object->type == json_object);
 
    if (((json_builder_value *) value)->additional_length_allocated > 0)
    {
