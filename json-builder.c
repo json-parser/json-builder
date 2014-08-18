@@ -117,9 +117,9 @@ json_value * json_array_push (json_value * array, json_value * value)
 {
    assert (array->type == json_array);
 
-   if (((json_builder_value *) value)->additional_length_allocated > 0)
+   if (((json_builder_value *) array)->additional_length_allocated > 0)
    {
-      -- ((json_builder_value *) value)->additional_length_allocated;
+      -- ((json_builder_value *) array)->additional_length_allocated;
    }
    else
    {
@@ -201,14 +201,14 @@ json_value * json_object_push_nocopy (json_value * object,
 
    assert (object->type == json_object);
 
-   if (((json_builder_value *) value)->additional_length_allocated > 0)
+   if (((json_builder_value *) object)->additional_length_allocated > 0)
    {
-      -- ((json_builder_value *) value)->additional_length_allocated;
+      -- ((json_builder_value *) object)->additional_length_allocated;
    }
    else
    {
       json_object_entry * values_new = (json_object_entry *)
-            realloc (object->u.object.values, sizeof (*value->u.object.values)
+            realloc (object->u.object.values, sizeof (*object->u.object.values)
                             * (object->u.object.length + 1));
 
       if (!values_new)
