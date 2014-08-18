@@ -99,6 +99,7 @@ json_value * json_array_new (size_t length)
        return NULL;
 
     value->type = json_array;
+    value->parent = NULL;
 
     value->u.array.length = 0;
 
@@ -109,6 +110,7 @@ json_value * json_array_new (size_t length)
     }
 
     ((json_builder_value *) value)->additional_length_allocated = length;
+    ((json_builder_value *) value)->length_iterated = 0;
 
     return value;
 }
@@ -148,6 +150,7 @@ json_value * json_object_new (size_t length)
        return NULL;
 
     value->type = json_object;
+    value->parent = NULL;
 
     value->u.object.length = 0;
 
@@ -159,6 +162,7 @@ json_value * json_object_new (size_t length)
     }
 
     ((json_builder_value *) value)->additional_length_allocated = length;
+    ((json_builder_value *) value)->length_iterated = 0;
 
     return value;
 }
@@ -262,6 +266,8 @@ json_value * json_string_new_nocopy (unsigned int length, json_char * buf)
    if (!value)
       return NULL;
 
+   value->parent = NULL;
+
    value->type = json_string;
    value->u.string.length = length;
    value->u.string.ptr = buf;
@@ -276,6 +282,8 @@ json_value * json_integer_new (json_int_t integer)
    if (!value)
       return NULL;
 
+   value->parent = NULL;
+
    value->type = json_integer;
    value->u.integer = integer;
 
@@ -288,6 +296,8 @@ json_value * json_double_new (double dbl)
    
    if (!value)
       return NULL;
+
+   value->parent = NULL;
 
    value->type = json_double;
    value->u.dbl = dbl;
@@ -302,6 +312,8 @@ json_value * json_boolean_new (int b)
    if (!value)
       return NULL;
 
+   value->parent = NULL;
+
    value->type = json_boolean;
    value->u.boolean = b;
 
@@ -315,6 +327,7 @@ json_value * json_null_new ()
    if (!value)
       return NULL;
 
+   value->parent = NULL;
    value->type = json_null;
 
    return value;
