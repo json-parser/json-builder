@@ -33,6 +33,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
+#include <math.h>
 
 #ifdef _MSC_VER
     #define snprintf _snprintf
@@ -561,6 +562,10 @@ size_t json_measure_ex (json_value * value, json_serialize_opts opts)
          case json_double:
 
             total += snprintf (NULL, 0, "%g", value->u.dbl);
+
+            if (value->u.dbl - floor (value->u.dbl) < 0.001)
+                total += 2;
+
             break;
 
          case json_boolean:
@@ -623,7 +628,7 @@ void json_serialize_ex (json_char * buf, json_value * value, json_serialize_opts
 {
    json_int_t integer, orig_integer;
    json_object_entry * entry;
-   json_char * ptr;
+   json_char * ptr, * dot;
    int indent = 0;
    char indent_char;
    int i;
@@ -773,8 +778,15 @@ void json_serialize_ex (json_char * buf, json_value * value, json_serialize_opts
 
             buf += sprintf (buf, "%g", value->u.dbl);
 
-            if ((ptr = strchr (ptr, ',')))
-               *ptr = '.';
+            if ((dot = strchr (ptr, ',')))
+            {
+               *dot = '.';
+            }
+            else if (!strchr (ptr, '.'))
+            {
+               *buf ++ = '.';
+               *buf ++ = '0';
+            }
 
             break;
 
