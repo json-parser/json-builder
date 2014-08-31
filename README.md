@@ -37,6 +37,10 @@ json-builder is fully interoperable with json-parser:
 
 > [ 1, 2, 3 ]
 
+Note that values created by or modified by json-builder must be freed with
+`json_builder_free` instead of `json_value_free`, otherwise the memory of the
+builder state will be leaked.
+
 
 Modes
 -----

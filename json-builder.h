@@ -144,6 +144,11 @@ size_t json_measure_ex (json_value *, json_serialize_opts);
 void json_serialize (json_char * buf, json_value *);
 void json_serialize_ex (json_char * buf, json_value *, json_serialize_opts);
 
+
+/*** Cleaning up
+ ***/
+void json_builder_free (json_value *);
+
 #ifdef __cplusplus
 }
 #endif

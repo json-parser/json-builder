@@ -50,10 +50,42 @@ typedef struct json_builder_value
 {
    json_value value;
 
+   int is_builder_value;
+
    size_t additional_length_allocated;
    size_t length_iterated;
 
 } json_builder_value;
+
+static int builderize (json_value * value)
+{
+   if (((json_builder_value *) value)->is_builder_value)
+      return 1;
+   
+   if (value->type == json_object)
+   {
+      /* Values straight out of the parser have the names of object entries
+       * allocated in the same allocation as the values array itself.  This is
+       * not desirable when manipulating values because the names would be easy
+       * to clobber.
+       */
+      for (unsigned int i = 0; i < value->u.object.length; ++ i)
+      {
+         json_char * name_copy;
+         json_object_entry * entry = &value->u.object.values [i];
+
+         if (! (name_copy = (json_char *) malloc ((entry->name_length + 1) * sizeof (json_char))))
+            return 0;
+
+         memcpy (name_copy, entry->name, entry->name_length + 1);
+         entry->name = name_copy;
+      }
+   }
+
+   ((json_builder_value *) value)->is_builder_value = 1;
+
+   return 1;
+}
 
 const size_t json_builder_extra = sizeof(json_builder_value) - sizeof(json_value);
 
@@ -94,15 +126,14 @@ int get_serialize_flags (json_serialize_opts opts)
 
 json_value * json_array_new (size_t length)
 {
-    json_value * value = (json_value *) malloc (sizeof (json_builder_value));
+    json_value * value = (json_value *) calloc (1, sizeof (json_builder_value));
 
     if (!value)
        return NULL;
 
-    value->type = json_array;
-    value->parent = NULL;
+    ((json_builder_value *) value)->is_builder_value = 1;
 
-    value->u.array.length = 0;
+    value->type = json_array;
 
     if (! (value->u.array.values = (json_value **) malloc (length * sizeof (json_value *))))
     {
@@ -111,7 +142,6 @@ json_value * json_array_new (size_t length)
     }
 
     ((json_builder_value *) value)->additional_length_allocated = length;
-    ((json_builder_value *) value)->length_iterated = 0;
 
     return value;
 }
@@ -119,6 +149,9 @@ json_value * json_array_new (size_t length)
 json_value * json_array_push (json_value * array, json_value * value)
 {
    assert (array->type == json_array);
+
+   if (!builderize (array) || !builderize (value))
+      return NULL;
 
    if (((json_builder_value *) array)->additional_length_allocated > 0)
    {
@@ -145,15 +178,14 @@ json_value * json_array_push (json_value * array, json_value * value)
 
 json_value * json_object_new (size_t length)
 {
-    json_value * value = (json_value *) malloc (sizeof (json_builder_value));
+    json_value * value = (json_value *) calloc (1, sizeof (json_builder_value));
 
     if (!value)
        return NULL;
 
-    value->type = json_object;
-    value->parent = NULL;
+    ((json_builder_value *) value)->is_builder_value = 1;
 
-    value->u.object.length = 0;
+    value->type = json_object;
 
     if (! (value->u.object.values = (json_object_entry *) calloc
            (length, sizeof (*value->u.object.values))))
@@ -163,7 +195,6 @@ json_value * json_object_new (size_t length)
     }
 
     ((json_builder_value *) value)->additional_length_allocated = length;
-    ((json_builder_value *) value)->length_iterated = 0;
 
     return value;
 }
@@ -205,6 +236,9 @@ json_value * json_object_push_nocopy (json_value * object,
    json_object_entry * entry;
 
    assert (object->type == json_object);
+
+   if (!builderize (object) || !builderize (value))
+      return NULL;
 
    if (((json_builder_value *) object)->additional_length_allocated > 0)
    {
@@ -262,12 +296,12 @@ json_value * json_string_new_length (unsigned int length, const json_char * buf)
 
 json_value * json_string_new_nocopy (unsigned int length, json_char * buf)
 {
-   json_value * value = (json_value *) malloc (sizeof (json_builder_value));
+   json_value * value = (json_value *) calloc (1, sizeof (json_builder_value));
    
    if (!value)
       return NULL;
 
-   value->parent = NULL;
+   ((json_builder_value *) value)->is_builder_value = 1;
 
    value->type = json_string;
    value->u.string.length = length;
@@ -278,12 +312,12 @@ json_value * json_string_new_nocopy (unsigned int length, json_char * buf)
 
 json_value * json_integer_new (json_int_t integer)
 {
-   json_value * value = (json_value *) malloc (sizeof (json_builder_value));
+   json_value * value = (json_value *) calloc (1, sizeof (json_builder_value));
    
    if (!value)
       return NULL;
 
-   value->parent = NULL;
+   ((json_builder_value *) value)->is_builder_value = 1;
 
    value->type = json_integer;
    value->u.integer = integer;
@@ -293,12 +327,12 @@ json_value * json_integer_new (json_int_t integer)
 
 json_value * json_double_new (double dbl)
 {
-   json_value * value = (json_value *) malloc (sizeof (json_builder_value));
+   json_value * value = (json_value *) calloc (1, sizeof (json_builder_value));
    
    if (!value)
       return NULL;
 
-   value->parent = NULL;
+   ((json_builder_value *) value)->is_builder_value = 1;
 
    value->type = json_double;
    value->u.dbl = dbl;
@@ -308,12 +342,12 @@ json_value * json_double_new (double dbl)
 
 json_value * json_boolean_new (int b)
 {
-   json_value * value = (json_value *) malloc (sizeof (json_builder_value));
+   json_value * value = (json_value *) calloc (1, sizeof (json_builder_value));
    
    if (!value)
       return NULL;
 
-   value->parent = NULL;
+   ((json_builder_value *) value)->is_builder_value = 1;
 
    value->type = json_boolean;
    value->u.boolean = b;
@@ -323,12 +357,13 @@ json_value * json_boolean_new (int b)
 
 json_value * json_null_new ()
 {
-   json_value * value = (json_value *) malloc (sizeof (json_builder_value));
+   json_value * value = (json_value *) calloc (1, sizeof (json_builder_value));
    
    if (!value)
       return NULL;
 
-   value->parent = NULL;
+   ((json_builder_value *) value)->is_builder_value = 1;
+
    value->type = json_null;
 
    return value;
@@ -337,6 +372,9 @@ json_value * json_null_new ()
 void json_object_sort (json_value * object, json_value * proto)
 {
    unsigned int i, out_index = 0;
+
+   if (!builderize (object))
+      return;  /* TODO error */
 
    assert (object->type == json_object);
    assert (proto->type == json_object);
@@ -366,8 +404,14 @@ void json_object_sort (json_value * object, json_value * proto)
 
 json_value * json_object_merge (json_value * objectA, json_value * objectB)
 {
+   unsigned int i;
+
    assert (objectA->type == json_object);
    assert (objectB->type == json_object);
+   assert (objectA != objectB);
+
+   if (!builderize (objectA) || !builderize (objectB))
+      return NULL;
 
    if (objectB->u.object.length <=
         ((json_builder_value *) objectA)->additional_length_allocated)
@@ -393,12 +437,17 @@ json_value * json_object_merge (json_value * objectA, json_value * objectB)
       objectA->u.object.values = values_new;
    }
 
-   memcpy (objectA->u.object.values + objectA->u.object.length,
-           objectB->u.object.values,
-           objectB->u.object.length * sizeof (json_object_entry));
+   for (i = 0; i < objectB->u.object.length; ++ i)
+   {
+      json_object_entry * entry = &objectA->u.object.values[objectA->u.object.length + i];
+
+      *entry = objectB->u.object.values[i];
+      entry->value->parent = objectA;
+   }
 
    objectA->u.object.length += objectB->u.object.length;
 
+   free (objectB->u.object.values);
    free (objectB);
 
    return objectA;
@@ -821,15 +870,25 @@ void json_serialize_ex (json_char * buf, json_value * value, json_serialize_opts
    *buf = 0;
 }
 
+void json_builder_free (json_value * value)
+{
+   if (((json_builder_value *) value)->is_builder_value)
+   {
+      if (value->type == json_object)
+      {
+         /* Names are allocated separately for builder values.  In parser
+          * values, they are part of the same allocation as the values array
+          * itself.
+          */
+         unsigned int i;
 
+         for (i = 0; i < value->u.object.length; ++ i)
+            free (value->u.object.values [i].name);
+      }
+   }
 
-
-
-
-
-
-
-
+   json_value_free (value);
+}
 
 
 
