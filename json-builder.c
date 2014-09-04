@@ -39,8 +39,6 @@
     #define snprintf _snprintf
 #endif
 
-#include "utf8proc.h"
-
 const static json_serialize_opts default_opts =
 {
    json_serialize_mode_single_line,
@@ -460,16 +458,12 @@ json_value * json_object_merge (json_value * objectA, json_value * objectB)
 static size_t measure_string (unsigned int length,
                               const json_char * str)
 {
-   ssize_t i = 0;
-   int32_t c = -1;
+   unsigned int i;
    size_t measured_length = 0;
 
-   for(;;)
+   for(i = 0; i < length; ++ i)
    {
-      i += utf8proc_iterate ((const uint8_t *) str + i, length - i, &c);
-
-      if(c == -1)
-         break;
+      json_char c = str [i];
 
       switch (c)
       {
@@ -485,14 +479,9 @@ static size_t measure_string (unsigned int length,
          measured_length += 2;
          break;
 
-      case 0:
-
-         measured_length += 6;
-         break;
-
       default:
 
-         measured_length += utf8proc_measure_char (c);
+         ++ measured_length;
          break;
       };
    };
@@ -509,18 +498,12 @@ static size_t serialize_string (json_char * buf,
                                 unsigned int length,
                                 const json_char * str)
 {
-   ssize_t i = 0;
-   int32_t c = -1;
-   json_char * orig_buf;
+   json_char * orig_buf = buf;
+   unsigned int i;
 
-   orig_buf = buf;
-
-   for(;;)
+   for(i = 0; i < length; ++ i)
    {
-      i += utf8proc_iterate ((const uint8_t *) str + i, length - i, &c);
-
-      if(c == -1)
-         break;
+      json_char c = str [i];
 
       switch (c)
       {
@@ -533,17 +516,9 @@ static size_t serialize_string (json_char * buf,
       case '\r':  PRINT_ESCAPED ('r');   continue;
       case '\t':  PRINT_ESCAPED ('t');   continue;
 
-      case 0:
-
-         PRINT_ESCAPED ('u');
-         sprintf (buf, "%04x", c);
-         buf += 4;
-
-         break;
-
       default:
 
-         buf += utf8proc_encode_char (c, (uint8_t *) buf);
+         *buf ++ = c;
          break;
       };
    };

@@ -4,7 +4,7 @@ project (json-builder)
 
 set (CMAKE_C_FLAGS "-std=c89 -ansi -pedantic -Wall -I../json-parser ${CMAKE_C_FLAGS}")
 
-set (SOURCES ${SOURCES} json-builder.c utf8proc.c)
+set (SOURCES ${SOURCES} json-builder.c)
 
 add_library (jsonbuilder ${SOURCES})
 
