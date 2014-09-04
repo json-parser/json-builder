@@ -39,6 +39,8 @@
     #define snprintf _snprintf
 #endif
 
+#include "utf8proc.h"
+
 const static json_serialize_opts default_opts =
 {
    json_serialize_mode_single_line,
@@ -458,20 +460,95 @@ json_value * json_object_merge (json_value * objectA, json_value * objectB)
 static size_t measure_string (unsigned int length,
                               const json_char * str)
 {
+   ssize_t i = 0;
+   int32_t c = -1;
+   size_t measured_length = 0;
 
-   /* TODO encoding
-    */
-   return strlen (str);
+   for(;;)
+   {
+      i += utf8proc_iterate ((const uint8_t *) str + i, length - i, &c);
+
+      if(c == -1)
+         break;
+
+      switch (c)
+      {
+      case '"':
+      case '\\':
+      case '/':
+      case '\b':
+      case '\f':
+      case '\n':
+      case '\r':
+      case '\t':
+
+         measured_length += 2;
+         break;
+
+      case 0:
+
+         measured_length += 6;
+         break;
+
+      default:
+
+         measured_length += utf8proc_measure_char (c);
+         break;
+      };
+   };
+
+   return measured_length;
 }
+
+#define PRINT_ESCAPED(c) do {  \
+   *buf ++ = '\\';             \
+   *buf ++ = (c);              \
+} while(0);                    \
 
 static size_t serialize_string (json_char * buf,
                                 unsigned int length,
                                 const json_char * str)
 {
-   /* TODO encoding
-    */
-   memcpy (buf, str, length);
-   return length;
+   ssize_t i = 0;
+   int32_t c = -1;
+   json_char * orig_buf;
+
+   orig_buf = buf;
+
+   for(;;)
+   {
+      i += utf8proc_iterate ((const uint8_t *) str + i, length - i, &c);
+
+      if(c == -1)
+         break;
+
+      switch (c)
+      {
+      case '"':   PRINT_ESCAPED ('\"');  continue;
+      case '\\':  PRINT_ESCAPED ('\\');  continue;
+      case '/':   PRINT_ESCAPED ('/');   continue;
+      case '\b':  PRINT_ESCAPED ('b');   continue;
+      case '\f':  PRINT_ESCAPED ('f');   continue;
+      case '\n':  PRINT_ESCAPED ('n');   continue;
+      case '\r':  PRINT_ESCAPED ('r');   continue;
+      case '\t':  PRINT_ESCAPED ('t');   continue;
+
+      case 0:
+
+         PRINT_ESCAPED ('u');
+         sprintf (buf, "%04x", c);
+         buf += 4;
+
+         break;
+
+      default:
+
+         buf += utf8proc_encode_char (c, (uint8_t *) buf);
+         break;
+      };
+   };
+
+   return buf - orig_buf;
 }
 
 size_t json_measure (json_value * value)

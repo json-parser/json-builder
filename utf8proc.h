@@ -45,6 +45,9 @@
  *    (i.e. UTF-8 encoded UTF-16 surrogates)
  *  - support for korean hangul characters
  *  Unicode Version 5.0.0 is supported.
+ *
+ *
+ *  json-builder note: utf8proc_measure_char has been added.
  */
 
 
@@ -260,11 +263,21 @@ bool utf8proc_codepoint_valid(int32_t uc);
  *  Returns 1, if the given unicode code-point is valid, otherwise 0.
  */
 
+ssize_t utf8proc_measure_char(int32_t uc);
+/*
+ *  Note: This function is not in the original utf8proc and was added in json-builder.
+ *
+ *  Returns the length the unicode char with the code point 'uc' would have as
+ *  a UTF-8 string.
+ *  In case of success the length is returned, otherwise 0.
+ *  This function does not check if 'uc' is a valid unicode code point.
+ */
+
 ssize_t utf8proc_encode_char(int32_t uc, uint8_t *dst);
 /*
  *  Encodes the unicode char with the code point 'uc' as an UTF-8 string in
  *  the byte array being pointed to by 'dst'. This array has to be at least
- *  4 bytes long.
+ *  utf8proc_measure_char(uc) or 4 bytes long.
  *  In case of success the number of bytes written is returned,
  *  otherwise 0.
  *  This function does not check if 'uc' is a valid unicode code point.

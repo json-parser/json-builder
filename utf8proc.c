@@ -163,6 +163,26 @@ bool utf8proc_codepoint_valid(int32_t uc) {
   else return true;
 }
 
+/* Added in json-builder
+ */
+ssize_t utf8proc_measure_char(int32_t uc) {
+  if (uc < 0x00) {
+    return 0;
+  } else if (uc < 0x80) {
+    return 1;
+  } else if (uc < 0x800) {
+    return 2;
+  } else if (uc == 0xFFFF) {
+    return 1;
+  } else if (uc == 0xFFFE) {
+    return 1;
+  } else if (uc < 0x10000) {
+    return 3;
+  } else if (uc < 0x110000) {
+    return 4;
+  } else return 0;
+}
+
 ssize_t utf8proc_encode_char(int32_t uc, uint8_t *dst) {
   if (uc < 0x00) {
     return 0;
