@@ -64,12 +64,14 @@ static int builderize (json_value * value)
    
    if (value->type == json_object)
    {
+      unsigned int i;
+
       /* Values straight out of the parser have the names of object entries
        * allocated in the same allocation as the values array itself.  This is
        * not desirable when manipulating values because the names would be easy
        * to clobber.
        */
-      for (unsigned int i = 0; i < value->u.object.length; ++ i)
+      for (i = 0; i < value->u.object.length; ++ i)
       {
          json_char * name_copy;
          json_object_entry * entry = &value->u.object.values [i];
