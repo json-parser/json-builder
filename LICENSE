@@ -1,5 +1,5 @@
 
-All files with the exception of utf8proc.c, utf8proc.h and utf8proc_data.c
+All files with the exception of utf8proc.c, utf8proc.h and utf8proc_data.h
 ----
 
   Copyright (C) 2014 James McLaughlin.  All rights reserved.
@@ -28,7 +28,7 @@ All files with the exception of utf8proc.c, utf8proc.h and utf8proc_data.c
   SUCH DAMAGE.
 
 
-utf8proc.c, utf8proc.h and utf8proc_data.c
+utf8proc.c, utf8proc.h and utf8proc_data.h
 ----
 
   Copyright (c) 2009, 2013 Public Software Group e. V., Berlin, Germany

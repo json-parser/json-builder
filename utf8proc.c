@@ -27,7 +27,7 @@
  *  The original data files are available at
  *  http://www.unicode.org/Public/UNIDATA/
  *
- *  Please notice the copyright statement in the file "utf8proc_data.c".
+ *  Please notice the copyright statement in the file "utf8proc_data.h".
  */
 
 
@@ -40,7 +40,7 @@
 
 
 #include "utf8proc.h"
-#include "utf8proc_data.c"
+#include "utf8proc_data.h"
 
 
 const int8_t utf8proc_utf8class[256] = {
