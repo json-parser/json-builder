@@ -783,7 +783,8 @@ void json_serialize_ex (json_char * buf, json_value * value, json_serialize_opts
                PRINT_NEWLINE();
             }
 
-            value = value->u.array.values [((json_builder_value *) value)->length_iterated ++];
+            ((json_builder_value *) value)->length_iterated++;
+            value = value->u.array.values [((json_builder_value *) value)->length_iterated - 1];
             continue;
 
          case json_object:
