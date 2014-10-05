@@ -926,22 +926,63 @@ void json_serialize_ex (json_char * buf, json_value * value, json_serialize_opts
 
 void json_builder_free (json_value * value)
 {
-   if (((json_builder_value *) value)->is_builder_value)
+   json_value * cur_value;
+
+   if (!value)
+      return;
+
+   value->parent = 0;
+
+   while (value)
    {
-      if (value->type == json_object)
+      switch (value->type)
       {
-         /* Names are allocated separately for builder values.  In parser
-          * values, they are part of the same allocation as the values array
-          * itself.
-          */
-         unsigned int i;
+         case json_array:
 
-         for (i = 0; i < value->u.object.length; ++ i)
-            free (value->u.object.values [i].name);
-      }
+            if (!value->u.array.length)
+            {
+               free (value->u.array.values);
+               break;
+            }
+
+            value = value->u.array.values [-- value->u.array.length];
+            continue;
+
+         case json_object:
+
+            if (!value->u.object.length)
+            {
+               free (value->u.object.values);
+               break;
+            }
+
+            -- value->u.object.length;
+
+            if (((json_builder_value *) value)->is_builder_value)
+            {
+               /* Names are allocated separately for builder values.  In parser
+                * values, they are part of the same allocation as the values array
+                * itself.
+                */
+               free (value->u.object.values [value->u.object.length].name);
+            }
+
+            value = value->u.object.values [value->u.object.length].value;
+            continue;
+
+         case json_string:
+
+            free (value->u.string.ptr);
+            break;
+
+         default:
+            break;
+      };
+
+      cur_value = value;
+      value = value->parent;
+      free (cur_value);
    }
-
-   json_value_free (value);
 }
 
 
