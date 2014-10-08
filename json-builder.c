@@ -664,7 +664,7 @@ size_t json_measure_ex (json_value * value, json_serialize_opts opts)
 
          case json_double:
 
-            total += snprintf (NULL, 0, "%g", value->u.dbl);
+            total += snprintf (NULL, 0, "%f", value->u.dbl);
 
             if (value->u.dbl - floor (value->u.dbl) < 0.001)
                 total += 2;
