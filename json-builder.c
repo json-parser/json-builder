@@ -98,13 +98,17 @@ const int f_spaces_around_brackets = (1 << 0);
 const int f_spaces_after_commas    = (1 << 1);
 const int f_spaces_after_colons    = (1 << 2);
 const int f_tabs                   = (1 << 3);
+const int f_no_scientific_notation = (1 << 4);
 
 int get_serialize_flags (json_serialize_opts opts)
 {
    int flags = 0;
 
+   if (opts.opts & json_serialize_opt_no_scientific_notation)
+      flags |= f_no_scientific_notation;
+
    if (opts.mode == json_serialize_mode_packed)
-      return 0;
+      return flags;
 
    if (opts.mode == json_serialize_mode_multiline)
    {
@@ -122,6 +126,7 @@ int get_serialize_flags (json_serialize_opts opts)
 
    if (! (opts.opts & json_serialize_opt_no_space_after_colon))
       flags |= f_spaces_after_colons;
+
 
    return flags;
 }
@@ -543,7 +548,7 @@ size_t json_measure_ex (json_value * value, json_serialize_opts opts)
    size_t depth = 0;
    size_t indents = 0;
    int flags;
-   int bracket_size, comma_size, colon_size;
+   int bracket_size, comma_size, colon_size, no_scientific_notation;
 
    flags = get_serialize_flags (opts);
 
@@ -552,7 +557,9 @@ size_t json_measure_ex (json_value * value, json_serialize_opts opts)
    bracket_size = flags & f_spaces_around_brackets ? 2 : 1;
    comma_size = flags & f_spaces_after_commas ? 2 : 1;
    colon_size = flags & f_spaces_after_colons ? 2 : 1;
+   no_scientific_notation = flags & f_no_scientific_notation ? 1 : 0;
 
+   
    while (value)
    {
       json_int_t integer;
@@ -663,11 +670,16 @@ size_t json_measure_ex (json_value * value, json_serialize_opts opts)
             break;
 
          case json_double:
-
-            total += snprintf (NULL, 0, "%f", value->u.dbl);
-
-            if (value->u.dbl - floor (value->u.dbl) < 0.001)
-                total += 2;
+           if (no_scientific_notation)
+           {
+              total += snprintf (NULL, 0, "%f", value->u.dbl);
+           }
+           else
+           {
+              total += snprintf (NULL, 0, "%g", value->u.dbl);             
+           }
+           if (value->u.dbl - floor (value->u.dbl) < 0.001)
+              total += 2;
 
             break;
 
@@ -878,8 +890,14 @@ void json_serialize_ex (json_char * buf, json_value * value, json_serialize_opts
          case json_double:
 
             ptr = buf;
-
-            buf += sprintf (buf, "%g", value->u.dbl);
+            if (flags & f_no_scientific_notation)
+            {
+              buf += sprintf (buf, "%f", value->u.dbl);              
+            }
+            else
+            {
+              buf += sprintf (buf, "%g", value->u.dbl);
+            }
 
             if ((dot = strchr (ptr, ',')))
             {
