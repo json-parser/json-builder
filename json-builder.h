@@ -121,7 +121,6 @@ json_value * json_null_new ();
 #define json_serialize_opt_no_space_after_comma    (1 << 3)
 #define json_serialize_opt_no_space_after_colon    (1 << 4)
 #define json_serialize_opt_use_tabs                (1 << 5)
-#define json_serialize_opt_no_scientific_notation  (1 << 6)
 
 typedef struct json_serialize_opts
 {
