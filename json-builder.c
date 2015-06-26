@@ -469,7 +469,6 @@ static size_t measure_string (unsigned int length,
       {
       case '"':
       case '\\':
-      case '/':
       case '\b':
       case '\f':
       case '\n':
@@ -509,7 +508,6 @@ static size_t serialize_string (json_char * buf,
       {
       case '"':   PRINT_ESCAPED ('\"');  continue;
       case '\\':  PRINT_ESCAPED ('\\');  continue;
-      case '/':   PRINT_ESCAPED ('/');   continue;
       case '\b':  PRINT_ESCAPED ('b');   continue;
       case '\f':  PRINT_ESCAPED ('f');   continue;
       case '\n':  PRINT_ESCAPED ('n');   continue;
