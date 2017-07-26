@@ -39,7 +39,7 @@
     #define snprintf _snprintf
 #endif
 
-const static json_serialize_opts default_opts =
+static const json_serialize_opts default_opts =
 {
    json_serialize_mode_single_line,
    0,
@@ -99,7 +99,7 @@ const int f_spaces_after_commas    = (1 << 1);
 const int f_spaces_after_colons    = (1 << 2);
 const int f_tabs                   = (1 << 3);
 
-int get_serialize_flags (json_serialize_opts opts)
+static int get_serialize_flags (json_serialize_opts opts)
 {
    int flags = 0;
 
@@ -357,7 +357,7 @@ json_value * json_boolean_new (int b)
    return value;
 }
 
-json_value * json_null_new ()
+json_value * json_null_new (void)
 {
    json_value * value = (json_value *) calloc (1, sizeof (json_builder_value));
    

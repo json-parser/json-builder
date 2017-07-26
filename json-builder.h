@@ -107,7 +107,7 @@ json_value * json_string_new_nocopy (unsigned int length, json_char *);
 json_value * json_integer_new (json_int_t);
 json_value * json_double_new (double);
 json_value * json_boolean_new (int);
-json_value * json_null_new ();
+json_value * json_null_new (void);
 
 
 /*** Serializing
