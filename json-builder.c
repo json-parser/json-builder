@@ -885,7 +885,7 @@ void json_serialize_ex (json_char * buf, json_value * value, json_serialize_opts
             {
                *dot = '.';
             }
-            else if (!strchr (ptr, '.'))
+            else if (!strchr (ptr, '.') && !strchr (ptr, 'e'))
             {
                *buf ++ = '.';
                *buf ++ = '0';
