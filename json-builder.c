@@ -33,11 +33,14 @@
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
-#include <math.h>
 
 #ifdef _MSC_VER
     #define snprintf _snprintf
 #endif
+
+static double floor(double d) {
+       return d - ((int)d % 1);
+}
 
 static const json_serialize_opts default_opts =
 {
