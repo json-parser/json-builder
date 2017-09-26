@@ -127,11 +127,17 @@ void test_buf (char * buffer, size_t size, int * num_failed)
    char * buf = (char *) malloc (measured);
    json_serialize (buf, value);
 
-   printf ("serialized len: %d\n", (int) strlen (buf) + 1);
+   size_t serialized = (int) strlen (buf) + 1;
+   printf ("serialized len: %d\n", serialized);
 
    printf ("serialized:\n%s\n", buf);
 
-   if (! (value2 = json_parse_ex (&settings, buf, strlen(buf), error)))
+   if (serialized > measured)
+   {
+      printf ("Serialized more than measured\n");
+      ++ *num_failed;
+   }
+   else if (! (value2 = json_parse_ex (&settings, buf, strlen(buf), error)))
    {
       printf ("Failed to re-parse: %s\n", error);
       ++ *num_failed;
