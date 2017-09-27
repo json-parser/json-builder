@@ -38,10 +38,6 @@
     #define snprintf _snprintf
 #endif
 
-static double floor(double d) {
-       return d - ((int)d % 1);
-}
-
 static const json_serialize_opts default_opts =
 {
    json_serialize_mode_single_line,
@@ -668,8 +664,11 @@ size_t json_measure_ex (json_value * value, json_serialize_opts opts)
 
             total += snprintf (NULL, 0, "%g", value->u.dbl);
 
-            if (value->u.dbl - floor (value->u.dbl) < 0.001)
-                total += 2;
+            /* Because sometimes we need to add ".0" if sprintf does not do it
+             * for us. Downside is that we allocate more bytes than strictly
+             * needed for serialization.
+             */
+            total += 2;
 
             break;
 
