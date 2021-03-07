@@ -7,35 +7,42 @@ Usage
 
 Quick example (docs coming soon):
 
-    json_value * arr = json_array_new(0);
-    json_array_push(arr, json_string_new("Hello world!"));
-    json_array_push(arr, json_integer_new(128));
+```c
+json_value * arr = json_array_new(0);
+json_array_push(arr, json_string_new("Hello world!"));
+json_array_push(arr, json_integer_new(128));
 
-    char * buf = malloc(json_measure(arr));
-    json_serialize(buf, arr);
+char * buf = malloc(json_measure(arr));
+json_serialize(buf, arr);
 
-    printf("%s\n", buf);
+printf("%s\n", buf);
+```
 
+```
 > [ "Hello world!", 128 ]
+```
 
 json-builder is fully interoperable with json-parser:
 
-    char json[] = "[ 1, 2, 3 ]";
+```c
+char json[] = "[ 1, 2, 3 ]";
 
-    json_settings settings = {};
-    settings.value_extra = json_builder_extra;  /* space for json-builder state */
+json_settings settings = {};
+settings.value_extra = json_builder_extra;  /* space for json-builder state */
 
-    char error[128];
-    json_value * arr = json_parse_ex(&settings, json, strlen(json), error);
+char error[128];
+json_value * arr = json_parse_ex(&settings, json, strlen(json), error);
 
-    /* Now serialize it again.
-     */
-    char * buf = malloc(json_measure(arr));
-    json_serialize(buf, arr);
+/* Now serialize it again. */
+char * buf = malloc(json_measure(arr));
+json_serialize(buf, arr);
 
-    printf("%s\n", buf);
+printf("%s\n", buf);
+```
 
+```
 > [ 1, 2, 3 ]
+```
 
 Note that values created by or modified by json-builder must be freed with
 `json_builder_free` instead of `json_value_free`, otherwise the memory of the
