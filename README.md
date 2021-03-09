@@ -18,8 +18,8 @@ json_serialize(buf, arr);
 printf("%s\n", buf);
 ```
 
-```
-> [ "Hello world!", 128 ]
+```json
+[ "Hello world!", 128 ]
 ```
 
 json-builder is fully interoperable with json-parser:
@@ -40,8 +40,8 @@ json_serialize(buf, arr);
 printf("%s\n", buf);
 ```
 
-```
-> [ 1, 2, 3 ]
+```json
+[ 1, 2, 3 ]
 ```
 
 Note that values created by or modified by json-builder must be freed with
@@ -53,7 +53,7 @@ Modes
 -----
 
 * `json_serialize_mode_multiline` — Generate multi-line JSON, for example:
-```
+```json
 [
   1,
   2,
@@ -62,12 +62,12 @@ Modes
 ```
 
 * `json_serialize_mode_single_line` — Generate JSON on a single line, for example:
-```
+```json
 [ 1, 2, 3 ]
 ```
 
 * `json_serialize_mode_packed` — Generate JSON as tightly packed as possible, for example:
-```
+```json
 [1,2,3]
 ```
 
