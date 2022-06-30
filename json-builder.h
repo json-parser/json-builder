@@ -134,15 +134,15 @@ typedef struct json_serialize_opts
 /* Returns a length in characters that is at least large enough to hold the
  * value in its serialized form, including a null terminator.
  */
-size_t json_measure (json_value *);
-size_t json_measure_ex (json_value *, json_serialize_opts);
+size_t json_measure (const json_value *);
+size_t json_measure_ex (const json_value *, json_serialize_opts);
 
 
 /* Serializes a JSON value into the buffer given (which must already be
  * allocated with a length of at least json_measure(value, opts))
  */
-void json_serialize (json_char * buf, json_value *);
-void json_serialize_ex (json_char * buf, json_value *, json_serialize_opts);
+void json_serialize (json_char * buf, const json_value *);
+void json_serialize_ex (json_char * buf, const json_value *, json_serialize_opts);
 
 
 /*** Cleaning up
