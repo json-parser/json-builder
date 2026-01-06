@@ -58,6 +58,7 @@ int main (int argc, char * argv [])
    test_file ("valid-0010.json", &num_failed);
    test_file ("valid-0011.json", &num_failed);
    test_file ("valid-0012.json", &num_failed); 
+   test_file ("valid-0013.json", &num_failed);
 
    printf ("Total failed tests: %d\n", num_failed);
 

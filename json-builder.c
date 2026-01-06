@@ -480,7 +480,39 @@ static size_t measure_string (unsigned int length,
 
       default:
 
-         ++ measured_length;
+         if ((unsigned char)c <= 0x1F)
+         {
+            measured_length += 6;
+         }
+         else if ((unsigned char)c == 0xED && i + 2 < length)
+         {
+            unsigned char c2 = (unsigned char)str [i + 1];
+            unsigned char c3 = (unsigned char)str [i + 2];
+
+            if (c2 == 0x80 && (c3 == 0xA8 || c3 == 0xA9))
+            {
+               /* U+2028 line separator, U+2029 paragraph separator */
+               measured_length += 6;
+            }
+            else if (c2 == 0xBF && (c3 == 0xBE || c3 == 0xBF))
+            {
+               /* Noncharacters U+FFFE / U+FFFF */
+               measured_length += 6;
+            }
+            else if ((c2 >= 0xA0 && c2 <= 0xBF) && (c3 >= 0x80 && c3 <= 0xBF))
+            {
+               /* Decode WTF-8 unpaired surrogate */
+               measured_length += 6;
+            }
+            else
+            {
+               measured_length++;
+            }
+         }
+         else
+         {
+            measured_length++;
+         }
          break;
       };
    };
@@ -493,12 +525,24 @@ static size_t measure_string (unsigned int length,
    *buf ++ = (c);              \
 } while(0);                    \
 
+/* Escape code point cp (0..0xFFFF) as \uXXXX */
+#define PRINT_ESCAPED_CP(cp) do {      \
+   *buf ++ = '\\';                     \
+   *buf ++ = 'u';                      \
+   *buf ++ = hex[((cp) >> 12) & 0xF];  \
+   *buf ++ = hex[((cp) >> 8)  & 0xF];  \
+   *buf ++ = hex[((cp) >> 4)  & 0xF];  \
+   *buf ++ = hex[(cp)         & 0xF];  \
+} while(0)
+
 static size_t serialize_string (json_char * buf,
                                 unsigned int length,
                                 const json_char * str)
 {
    json_char * orig_buf = buf;
    unsigned int i;
+
+   static const char hex[] = "0123456789ABCDEF";
 
    for(i = 0; i < length; ++ i)
    {
@@ -516,7 +560,45 @@ static size_t serialize_string (json_char * buf,
 
       default:
 
-         *buf ++ = c;
+         if ((unsigned char)c <= 0x1F)
+         {
+            PRINT_ESCAPED_CP (c);
+         }
+         else if ((unsigned char)c == 0xED && i + 2 < length)
+         {
+            unsigned char c2 = (unsigned char)str [i + 1];
+            unsigned char c3 = (unsigned char)str [i + 2];
+
+            if (c2 == 0x80 && (c3 == 0xA8 || c3 == 0xA9))
+            {
+               /* U+2028 line separator, U+2029 paragraph separator */
+               unsigned int cp = ((c & 0x0F) << 12) | ((c2 & 0x3F) << 6) | (c3 & 0x3F);
+               PRINT_ESCAPED_CP (cp);
+               i += 2;
+            }
+            else if (c2 == 0xBF && (c3 == 0xBE || c3 == 0xBF))
+            {
+               /* Noncharacters U+FFFE / U+FFFF */
+               unsigned int cp = ((c & 0x0F) << 12) | ((c2 & 0x3F) << 6) | (c3 & 0x3F);
+               PRINT_ESCAPED_CP (cp);
+               i += 2;
+            }
+            else if ((c2 >= 0xA0 && c2 <= 0xBF) && (c3 >= 0x80 && c3 <= 0xBF))
+            {
+               /* Decode WTF-8 unpaired surrogate */
+               unsigned int cp = ((c & 0x0F) << 12) | ((c2 & 0x3F) << 6) | (c3 & 0x3F);
+               PRINT_ESCAPED_CP (cp);
+               i += 2;
+            }
+            else
+            {
+               *buf ++ = c;
+            }
+         }
+         else
+         {
+            *buf ++ = c;
+         }
          break;
       };
    };
