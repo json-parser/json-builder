@@ -30,18 +30,16 @@
 
 #include "../json-builder.h"
 
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include <vector>
-using namespace std;
-
 void test_file (const char * filename, int * num_failed);
-void test_buf (char * buffer, size_t size, int * num_failed);
-bool json_equal (json_value * a, json_value * b);
+void test_buf (const char * buffer, size_t size, int * num_failed);
+int json_equal (const json_value * a, const json_value * b);
 
-int main (int argc, char * argv [])
+int main ()
 {
    int num_failed = 0;
 
@@ -105,11 +103,15 @@ void test_file (const char * filename, int * num_failed)
    free (buffer);
 }
 
-void test_buf (char * buffer, size_t size, int * num_failed)
+void test_buf (const char * buffer, size_t size, int * num_failed)
 {
-   json_value * value, * value2;
+   json_value * value = 0, * value2 = 0;
    json_settings settings = { 0 };
-   char error [128];
+   char error [json_error_max];
+   size_t measured = 0;
+   char * buf = 0;
+   size_t serialized = 0;
+   int equality = 0;
 
    settings.value_extra = json_builder_extra;
 
@@ -121,14 +123,20 @@ void test_buf (char * buffer, size_t size, int * num_failed)
       return;
    }
 
-   size_t measured = json_measure (value);
+   measured = json_measure (value);
    printf ("measured len: %d\n", (int) measured);
 
-   char * buf = (char *) malloc (measured);
+   buf = (char *) malloc (measured);
+   if (!buf)
+   {
+      fprintf (stderr, "  Error allocating memory\n");
+      json_value_free (value);
+      return;
+   }
    json_serialize (buf, value);
 
-   size_t serialized = (int) strlen (buf) + 1;
-   printf ("serialized len: %d\n", serialized);
+   serialized = strlen (buf) + 1;
+   printf ("serialized len: %lu\n", (unsigned long) serialized);
 
    printf ("serialized:\n%s\n", buf);
 
@@ -142,9 +150,9 @@ void test_buf (char * buffer, size_t size, int * num_failed)
       printf ("Failed to re-parse: %s\n", error);
       ++ *num_failed;
    }
-   else if (!json_equal (value, value2))
+   else if ( (equality = json_equal (value, value2)) != 1)
    {
-      printf ("Changed after re-parse\n");
+      printf (equality == 0 ? "Changed after re-parse\n" : "Memory allocation failure\n");
       ++ *num_failed;
    }
    else
@@ -152,114 +160,137 @@ void test_buf (char * buffer, size_t size, int * num_failed)
       printf ("success\n");
    }
 
+   free(buf);
    json_value_free (value);
    json_value_free (value2);
 }
 
-bool json_equal (json_value * a, json_value * b)
+int json_equal (const json_value * a, const json_value * b)
 {
-    vector <json_value *> stack;
+   size_t stack_size = 0;
+   size_t stack_capacity = 0;
+   const json_value ** stack = 0;
+   unsigned int i = 0;
 
-    stack.push_back (a);
-    stack.push_back (b);
+   #define stack_append(p) \
+      if (stack_size >= stack_capacity)\
+      {\
+         const json_value ** stack_realloc = (const json_value **) realloc(stack, sizeof(const json_value *) * (stack_capacity += 10));\
+         if (!stack_realloc)\
+         {\
+            goto allocation_failure;\
+         }\
+         stack = stack_realloc;\
+      }\
+      stack [stack_size] = (p);\
+      ++stack_size;
 
-    while (stack.size () > 0)
-    {
-        json_value * rhs = stack.back ();
-        stack.pop_back ();
+   stack_append (a);
+   stack_append (b);
 
-        json_value * lhs = stack.back ();
-        stack.pop_back ();
+   while (stack_size > 0)
+   {
+      const json_value * rhs = stack [--stack_size];
+      const json_value * lhs = stack [--stack_size];
 
-        if (lhs->type != rhs->type)
-            return false;
+      if (lhs->type != rhs->type)
+         goto unequal;
 
-        switch (lhs->type)
-        {
-            case json_none:
-                break;
+      switch (lhs->type)
+      {
+         case json_none:
+            break;
 
-            case json_object:
+         case json_object:
 
-                if (lhs->u.object.length != rhs->u.object.length)
-                    return false;
+            if (lhs->u.object.length != rhs->u.object.length)
+               goto unequal;
 
-                for (int i = 0; i < lhs->u.object.length; ++ i)
-                {
-                    if (lhs->u.object.values [i].name_length !=
-                        rhs->u.object.values [i].name_length)
-                    {
-                        return false;
-                    }
+            for (i = 0; i < lhs->u.object.length; ++ i)
+            {
+               if (lhs->u.object.values [i].name_length !=
+                   rhs->u.object.values [i].name_length)
+               {
+                   goto unequal;
+               }
 
-                    if (memcmp (lhs->u.object.values [i].name,
-                                rhs->u.object.values [i].name,
-                                lhs->u.object.values [i].name_length) != 0)
-                    {
-                        return false;
-                    }
+               if (memcmp (lhs->u.object.values [i].name,
+                           rhs->u.object.values [i].name,
+                           lhs->u.object.values [i].name_length) != 0)
+               {
+                   goto unequal;
+               }
 
-                    stack.push_back (lhs->u.object.values [i].value);
-                    stack.push_back (rhs->u.object.values [i].value);
-                }
+               stack_append (lhs->u.object.values [i].value);
+               stack_append (rhs->u.object.values [i].value);
+            }
 
-                break;
+            break;
 
-            case json_array:
+         case json_array:
 
-                if (lhs->u.array.length != rhs->u.array.length)
-                    return false;
+            if (lhs->u.array.length != rhs->u.array.length)
+               goto unequal;
 
-                for (int i = 0; i < lhs->u.array.length; ++ i)
-                {
-                    stack.push_back (lhs->u.array.values [i]);
-                    stack.push_back (rhs->u.array.values [i]);
-                }
+            for (i = 0; i < lhs->u.array.length; ++ i)
+            {
+               stack_append (lhs->u.array.values [i]);
+               stack_append (rhs->u.array.values [i]);
+            }
 
-                break;
+            break;
 
-            case json_integer:
+         case json_integer:
 
-                if (lhs->u.integer != rhs->u.integer)
-                    return false;
+            if (lhs->u.integer != rhs->u.integer)
+               goto unequal;
 
-                break;
+            break;
 
-            case json_double:
+         case json_double:
 
-                /* TODO */
+            /* TODO */
 
-                /* if (lhs->u.dbl != rhs->u.dbl)
-                    return false; */
+            /* if (lhs->u.dbl != rhs->u.dbl)
+               goto unequal; */
 
-                break;
+            break;
 
-            case json_string:
+         case json_string:
 
-                if (lhs->u.string.length != rhs->u.string.length)
-                    return false;
+            if (lhs->u.string.length != rhs->u.string.length)
+               goto unequal;
 
-                if (memcmp (lhs->u.string.ptr,
-                            rhs->u.string.ptr,
-                            lhs->u.string.length) != 0)
-                {
-                    return false;
-                }
+            if (memcmp (lhs->u.string.ptr,
+                        rhs->u.string.ptr,
+                        lhs->u.string.length) != 0)
+            {
+               goto unequal;
+            }
 
-                break;
+            break;
 
-            case json_boolean:
+         case json_boolean:
 
-                if (lhs->u.boolean != rhs->u.boolean)
-                    return false;
+            if (lhs->u.boolean != rhs->u.boolean)
+               goto unequal;
 
-                break;
+            break;
 
-            case json_null:
-                break;
-        };
-    }
+         case json_null:
+            break;
+      }
+   }
 
-    return true;
+/*equal:*/
+   free(stack);
+   return 1;
+
+unequal:
+   free(stack);
+   return 0;
+
+allocation_failure:
+   free(stack);
+   return -1;
 }
-

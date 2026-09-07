@@ -1,0 +1,173 @@
+name: CI
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  # Allows running this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build-gcc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout json-builder
+        uses: actions/checkout@v6
+        with:
+          path: builder
+
+      - name: Checkout json-parser
+        uses: actions/checkout@v6
+        with:
+          repository: json-parser/json-parser
+          path: parser
+          sparse-checkout: |
+            json.h
+            json.c
+          sparse-checkout-cone-mode: false
+
+      - name: CI debug
+        run: ls -laR
+
+#      - name: Build json-builder.c as C89 without JSON_TRACK_SOURCE
+#        run: c89 -ansi -Wall -Wpedantic -Werror -pedantic -pedantic-errors -D_ANSI_SOURCE -Iparser -Ibuilder -shared parser/json.c builder/json-builder.c -lm -o json-c89-notrack
+
+#      - name: Build json-builder.c as C89
+#        run: c89 -ansi -Wall -Wpedantic -Werror -pedantic -pedantic-errors -D_ANSI_SOURCE -DJSON_TRACK_SOURCE -Iparser -Ibuilder -shared parser/json.c builder/json-builder.c -lm -o json-c89
+
+      - name: Build json-builder.c as C99 without JSON_TRACK_SOURCE
+        run: gcc -std=c99 -Wall -Wpedantic -Werror -pedantic -pedantic-errors -Iparser -Ibuilder -shared parser/json.c builder/json-builder.c -lm -o json-c99
+
+      - name: Build json-builder.c as C99
+        run: gcc -std=c99 -Wall -Wpedantic -Werror -pedantic -pedantic-errors -DJSON_TRACK_SOURCE -Iparser -Ibuilder -shared parser/json.c builder/json-builder.c -lm -o json-c99
+
+      - name: Build json-builder.c as C11
+        run: gcc -std=c11 -Wall -Wpedantic -Werror -pedantic -pedantic-errors -DJSON_TRACK_SOURCE -Iparser -Ibuilder -shared parser/json.c builder/json-builder.c -lm -o json-c11
+
+      - name: Build json-builder.c as C17
+        run: gcc -std=c17 -Wall -Wpedantic -Werror -pedantic -pedantic-errors -DJSON_TRACK_SOURCE -Iparser -Ibuilder -shared parser/json.c builder/json-builder.c -lm -o json-c17
+
+      - name: Build json-builder.c as C17 with unused parameters as errors
+        run: gcc -std=c17 -Wall -Wpedantic -Werror -Werror=unused-parameter -pedantic -pedantic-errors -DJSON_TRACK_SOURCE -Iparser -Ibuilder -shared parser/json.c builder/json-builder.c -lm -o json-c17-unused
+
+      - name: Build json-builder.c as C2x
+        run: gcc -std=c2x -Wall -Wpedantic -Werror -pedantic -pedantic-errors -DJSON_TRACK_SOURCE -Iparser -Ibuilder -shared parser/json.c builder/json-builder.c -lm -o json-c2x
+
+      - name: Build json-builder.c as C++98
+        run: g++ -std=c++98 -Wall -Wpedantic -Werror -pedantic -pedantic-errors -DJSON_TRACK_SOURCE -Iparser -Ibuilder -shared -fPIC -x c++ parser/json.c builder/json-builder.c -lm -o json-cpp98
+
+      - name: Build json-builder.c as C++11
+        run: g++ -std=c++11 -Wall -Wpedantic -Werror -pedantic -pedantic-errors -DJSON_TRACK_SOURCE -Iparser -Ibuilder -shared -fPIC -x c++ parser/json.c builder/json-builder.c -lm -o json-cpp11
+
+      - name: Build json-builder.c as C++14
+        run: g++ -std=c++14 -Wall -Wpedantic -Werror -pedantic -pedantic-errors -DJSON_TRACK_SOURCE -Iparser -Ibuilder -shared -fPIC -x c++ parser/json.c builder/json-builder.c -lm -o json-cpp14
+
+      - name: Build json-builder.c as C++17
+        run: g++ -std=c++17 -Wall -Wpedantic -Werror -pedantic -pedantic-errors -DJSON_TRACK_SOURCE -Iparser -Ibuilder -shared -fPIC -x c++ parser/json.c builder/json-builder.c -lm -o json-cpp17
+
+      - name: Build json-builder.c as C++20
+        run: g++ -std=c++20 -Wall -Wpedantic -Werror -pedantic -pedantic-errors -DJSON_TRACK_SOURCE -Iparser -Ibuilder -shared -fPIC -x c++ parser/json.c builder/json-builder.c -lm -o json-cpp20
+
+      - name: Build json-builder.c as C++2b
+        run: g++ -std=c++2b -Wall -Wpedantic -Werror -pedantic -pedantic-errors -DJSON_TRACK_SOURCE -Iparser -Ibuilder -shared -fPIC -x c++ parser/json.c builder/json-builder.c -lm -o json-cpp2b
+
+      - name: Build tests
+        run: |
+          gcc -std=c99 -Wall -Wpedantic -Werror -pedantic -pedantic-errors -D_ANSI_SOURCE -DJSON_TRACK_SOURCE -Iparser -Ibuilder parser/json.c builder/json-builder.c builder/test/main.c -lm    -O0          -o json-test-O0
+          gcc -std=c99 -Wall -Wpedantic -Werror -pedantic -pedantic-errors -D_ANSI_SOURCE -DJSON_TRACK_SOURCE -Iparser -Ibuilder parser/json.c builder/json-builder.c builder/test/main.c -lm    -O1 -DNDEBUG -o json-test-O1
+          gcc -std=c99 -Wall -Wpedantic -Werror -pedantic -pedantic-errors -D_ANSI_SOURCE -DJSON_TRACK_SOURCE -Iparser -Ibuilder parser/json.c builder/json-builder.c builder/test/main.c -lm    -O2 -DNDEBUG -o json-test-O2
+          gcc -std=c99 -Wall -Wpedantic -Werror -pedantic -pedantic-errors -D_ANSI_SOURCE -DJSON_TRACK_SOURCE -Iparser -Ibuilder parser/json.c builder/json-builder.c builder/test/main.c -lm    -O3 -DNDEBUG -o json-test-O3
+          gcc -std=c99                                                     -D_ANSI_SOURCE -DJSON_TRACK_SOURCE -Iparser -Ibuilder parser/json.c builder/json-builder.c builder/test/main.c -lm -g -O0 -fno-omit-frame-pointer -fsanitize=address   -o json-test-sanitize-address
+          gcc -std=c99                                                     -D_ANSI_SOURCE -DJSON_TRACK_SOURCE -Iparser -Ibuilder parser/json.c builder/json-builder.c builder/test/main.c -lm -g -O0 -fno-omit-frame-pointer -fsanitize=undefined -o json-test-sanitize-undefined
+
+      - name: Run json-test-O0
+        run: |
+          cd builder/test
+          ../../json-test-O0
+
+      - name: Run json-test-O1
+        run: |
+          cd builder/test
+          ../../json-test-O1
+
+      - name: Run json-test-O2
+        run: |
+          cd builder/test
+          ../../json-test-O2
+
+      - name: Run json-test-O3
+        run: |
+          cd builder/test
+          ../../json-test-O3
+
+      - name: Run json-test-sanitize-address
+        run: |
+          cd builder/test
+          ../../json-test-sanitize-address
+
+      - name: Run json-test-sanitize-undefined
+        run: |
+          cd builder/test
+          ../../json-test-sanitize-undefined
+
+  build-msvc:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch:
+          - amd64_x86
+          - amd64
+#          - amd64_arm # disabled because newer ARM processors and Windows 11 24H2 both removed ARM32 support
+          - amd64_arm64
+    steps:
+      - name: Checkout json-builder
+        uses: actions/checkout@v6
+        with:
+          path: builder
+
+      - name: Checkout json-parser
+        uses: actions/checkout@v6
+        with:
+          repository: json-parser/json-parser
+          path: parser
+          sparse-checkout: |
+            json.h
+            json.c
+          sparse-checkout-cone-mode: false
+
+      - name: Add cl.exe to path
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch }}
+
+      - name: Build json-builder.c as MS C89 without JSON_TRACK_SOURCE
+        run: cl /permissive- /Zc:preprocessor /Zc:throwingNew /volatile:iso /utf-8 /Za /Wall /I parser /I builder /LD parser/json.c builder/json-builder.c
+
+      - name: Build json-builder.c as MS C89
+        run: cl /permissive- /Zc:preprocessor /Zc:throwingNew /volatile:iso /utf-8 /Za /Wall /DJSON_TRACK_SOURCE /I parser /I builder /LD parser/json.c builder/json-builder.c
+
+      - name: Build json-builder.c as C11
+        run: cl /permissive- /Zc:preprocessor /Zc:throwingNew /volatile:iso /utf-8 /std:c11 /Wall /DJSON_TRACK_SOURCE /I parser /I builder /LD parser/json.c builder/json-builder.c
+
+      - name: Build json-builder.c as C17
+        run: cl /permissive- /Zc:preprocessor /Zc:throwingNew /volatile:iso /utf-8 /std:c17 /Wall /DJSON_TRACK_SOURCE /I parser /I builder /LD parser/json.c builder/json-builder.c
+
+      - name: Build json-builder.c as C++14
+        run: cl /permissive- /Zc:preprocessor /Zc:throwingNew /volatile:iso /utf-8 /std:c++14 /Zc:__cplusplus /Wall /DJSON_TRACK_SOURCE /I parser /I builder /LD /Tp parser/json.c builder/json-builder.c
+
+      - name: Build json-builder.c as C++17
+        run: cl /permissive- /Zc:preprocessor /Zc:throwingNew /volatile:iso /utf-8 /std:c++17 /Zc:__cplusplus /Wall /DJSON_TRACK_SOURCE /I parser /I builder /LD /Tp parser/json.c builder/json-builder.c
+
+      - name: Build json-builder.c as C++20
+        run: cl /permissive- /Zc:preprocessor /Zc:throwingNew /volatile:iso /utf-8 /std:c++20 /Zc:__cplusplus /Wall /DJSON_TRACK_SOURCE /I parser /I builder /LD /Tp parser/json.c builder/json-builder.c
+
+      - name: Build json-builder.c as C++ latest
+        run: cl /permissive- /Zc:preprocessor /Zc:throwingNew /volatile:iso /utf-8 /std:c++latest /Zc:__cplusplus /Wall /DJSON_TRACK_SOURCE /I parser /I builder /LD /Tp parser/json.c builder/json-builder.c
+
+      - name: Build test executable
+        run: cl /permissive- /Zc:preprocessor /Zc:throwingNew /volatile:iso /utf-8 /std:c++latest /Zc:__cplusplus /Wall /DJSON_TRACK_SOURCE /I parser /I builder /MT /Tp parser/json.c builder/json-builder.c /Tp builder\test\main.c /Febuilder\test\json-test.exe
+
+      - name: Run tests
+        if: matrix.arch != 'amd64_arm' && matrix.arch != 'amd64_arm64'
+        working-directory: ./builder/test
+        run: ./json-test.exe
