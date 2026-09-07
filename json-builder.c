@@ -536,6 +536,7 @@ size_t json_measure (const json_value * value)
 
 size_t json_measure_ex (const json_value * value, json_serialize_opts opts)
 {
+   const json_value * root = value;
    size_t total = 1;  /* null terminator */
    size_t newlines = 0;
    size_t depth = 0;
@@ -690,6 +691,8 @@ size_t json_measure_ex (const json_value * value, json_serialize_opts opts)
             break;
       };
 
+      if (value == root)
+         break;
       value = value->parent;
    }
 
@@ -731,6 +734,7 @@ void json_serialize (json_char * buf, const json_value * value)
 
 void json_serialize_ex (json_char * buf, const json_value * value, json_serialize_opts opts)
 {
+   const json_value * root = value;
    json_int_t integer, orig_integer;
    json_object_entry * entry;
    json_char * ptr, * dot;
@@ -921,6 +925,8 @@ void json_serialize_ex (json_char * buf, const json_value * value, json_serializ
             break;
       };
 
+      if (value == root)
+         break;
       value = value->parent;
    }
 

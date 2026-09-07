@@ -59,7 +59,7 @@ int main ()
 
    printf ("Total failed tests: %d\n", num_failed);
 
-   return 0;
+   return num_failed ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 void test_file (const char * filename, int * num_failed)
@@ -150,14 +150,31 @@ void test_buf (const char * buffer, size_t size, int * num_failed)
       printf ("Failed to re-parse: %s\n", error);
       ++ *num_failed;
    }
-   else if ( (equality = json_equal (value, value2)) != 1)
-   {
-      printf (equality == 0 ? "Changed after re-parse\n" : "Memory allocation failure\n");
-      ++ *num_failed;
-   }
    else
    {
-      printf ("success\n");
+      equality = json_equal (value, value2);
+      switch (equality)
+      {
+         case 1:
+            printf ("success\n");
+            break;
+         case 0:
+            printf ("Changed after re-parse\n");
+            ++ *num_failed;
+            break;
+         case -1:
+            printf ("Memory allocation failure\n");
+            ++ *num_failed;
+            break;
+         case -2:
+            printf ("Child objects measured larger than their parents\n");
+            ++ *num_failed;
+            break;
+         default:
+            printf ("Memory corruption\n");
+            ++ *num_failed;
+            break;
+      }
    }
 
    free(buf);
@@ -192,9 +209,14 @@ int json_equal (const json_value * a, const json_value * b)
    {
       const json_value * rhs = stack [--stack_size];
       const json_value * lhs = stack [--stack_size];
+      size_t measured_rhs = 0;
+      size_t measured_lhs = 0;
 
       if (lhs->type != rhs->type)
          goto unequal;
+
+      measured_rhs = json_measure (rhs);
+      measured_lhs = json_measure (lhs);
 
       switch (lhs->type)
       {
@@ -208,17 +230,26 @@ int json_equal (const json_value * a, const json_value * b)
 
             for (i = 0; i < lhs->u.object.length; ++ i)
             {
+               size_t measured_rhs_sub = 0;
+               size_t measured_lhs_sub = 0;
                if (lhs->u.object.values [i].name_length !=
                    rhs->u.object.values [i].name_length)
                {
-                   goto unequal;
+                  goto unequal;
                }
 
                if (memcmp (lhs->u.object.values [i].name,
                            rhs->u.object.values [i].name,
                            lhs->u.object.values [i].name_length) != 0)
                {
-                   goto unequal;
+                  goto unequal;
+               }
+
+               measured_rhs_sub = json_measure (rhs->u.object.values [i].value);
+               measured_lhs_sub = json_measure (lhs->u.object.values [i].value);
+               if (measured_lhs_sub >= measured_lhs || measured_rhs_sub >= measured_rhs)
+               {
+                  goto measurement_failure;
                }
 
                stack_append (lhs->u.object.values [i].value);
@@ -234,6 +265,13 @@ int json_equal (const json_value * a, const json_value * b)
 
             for (i = 0; i < lhs->u.array.length; ++ i)
             {
+               size_t measured_rhs_sub = json_measure (rhs->u.array.values [i]);
+               size_t measured_lhs_sub = json_measure (lhs->u.array.values [i]);
+               if (measured_lhs_sub >= measured_lhs || measured_rhs_sub >= measured_rhs)
+               {
+                  goto measurement_failure;
+               }
+
                stack_append (lhs->u.array.values [i]);
                stack_append (rhs->u.array.values [i]);
             }
@@ -293,4 +331,8 @@ unequal:
 allocation_failure:
    free(stack);
    return -1;
+
+measurement_failure:
+   free(stack);
+   return -2;
 }
