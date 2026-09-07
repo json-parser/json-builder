@@ -524,7 +524,7 @@ static size_t serialize_string (json_char * buf,
    return buf - orig_buf;
 }
 
-size_t json_measure (json_value * value)
+size_t json_measure (const json_value * value)
 {
    return json_measure_ex (value, default_opts);
 }
@@ -534,7 +534,7 @@ size_t json_measure (json_value * value)
    indents += depth;                               \
 } while(0);                                        \
 
-size_t json_measure_ex (json_value * value, json_serialize_opts opts)
+size_t json_measure_ex (const json_value * value, json_serialize_opts opts)
 {
    size_t total = 1;  /* null terminator */
    size_t newlines = 0;
@@ -702,7 +702,7 @@ size_t json_measure_ex (json_value * value, json_serialize_opts opts)
    return total;
 }
 
-void json_serialize (json_char * buf, json_value * value)
+void json_serialize (json_char * buf, const json_value * value)
 {
    json_serialize_ex (buf, value, default_opts);
 }
@@ -729,7 +729,7 @@ void json_serialize (json_char * buf, json_value * value)
    *buf ++ = (c);                                     \
 } while(0);                                           \
 
-void json_serialize_ex (json_char * buf, json_value * value, json_serialize_opts opts)
+void json_serialize_ex (json_char * buf, const json_value * value, json_serialize_opts opts)
 {
    json_int_t integer, orig_integer;
    json_object_entry * entry;
