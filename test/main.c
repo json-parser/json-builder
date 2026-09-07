@@ -39,7 +39,7 @@ void test_file (const char * filename, int * num_failed);
 void test_buf (const char * buffer, size_t size, int * num_failed);
 int json_equal (const json_value * a, const json_value * b);
 
-int main ()
+int main (void)
 {
    int num_failed = 0;
 
