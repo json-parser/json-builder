@@ -137,7 +137,7 @@ json_value * json_array_new (size_t length)
 
     value->type = json_array;
 
-    if (! (value->u.array.values = (json_value **) malloc (length * sizeof (json_value *))))
+    if (! (value->u.array.values = (json_value **) malloc (length * sizeof (json_value *))) && length > 0)
     {
        free (value);
        return NULL;
@@ -190,7 +190,7 @@ json_value * json_object_new (size_t length)
     value->type = json_object;
 
     if (! (value->u.object.values = (json_object_entry *) calloc
-           (length, sizeof (*value->u.object.values))))
+           (length, sizeof (*value->u.object.values))) && length > 0)
     {
        free (value);
        return NULL;
