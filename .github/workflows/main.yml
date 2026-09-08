@@ -10,6 +10,8 @@ on:
 jobs:
   build-gcc:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout json-builder
         uses: actions/checkout@v6
@@ -25,9 +27,6 @@ jobs:
             json.h
             json.c
           sparse-checkout-cone-mode: false
-
-      - name: CI debug
-        run: ls -laR
 
 #      - name: Build json-builder.c as C89 without JSON_TRACK_SOURCE
 #        run: c89 -ansi -Wall -Wpedantic -Werror -pedantic -pedantic-errors -D_ANSI_SOURCE -Iparser -Ibuilder -shared parser/json.c builder/json-builder.c -lm -o json-c89-notrack
@@ -112,6 +111,8 @@ jobs:
 
   build-msvc:
     runs-on: windows-latest
+    permissions:
+      contents: read
     strategy:
       matrix:
         arch:

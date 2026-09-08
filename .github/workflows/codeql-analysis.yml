@@ -43,8 +43,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-#        - language: actions
-#          build-mode: none
+        - language: actions
+          build-mode: none
         - language: c-cpp
           build-mode: none
         # CodeQL supports the following values keywords for 'language': 'actions', 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'rust', 'swift'
@@ -76,10 +76,7 @@ jobs:
     # or others). This is typically only required for manual builds.
     - name: Prepare source files
       run: |
-        mv parser/json.h .
-        mv parser/json.c .
-        mv builder/json-builder.h .
-        mv builder/json-builder.c .
+        mv -v -t . parser/json.h parser/json.c builder/json-builder.h builder/json-builder.c builder/.github
         rm -rf parser builder
 
     # Initializes the CodeQL tools for scanning.
